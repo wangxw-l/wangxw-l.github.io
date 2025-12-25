@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>浪漫圣诞树</title>
+    <title>3D浪漫圣诞树</title>
     <style>
         * {
             margin: 0;
@@ -13,100 +13,40 @@
         body {
             background: #000;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             overflow: hidden;
             font-family: "Microsoft YaHei", sans-serif;
         }
-        /* 雪花样式 */
+        /* 雪花样式（优化适配3D场景） */
         .snowflake {
             position: absolute;
             color: #fff;
             font-size: 16px;
             opacity: 0.8;
             user-select: none;
+            pointer-events: none; /* 避免遮挡3D交互 */
             animation: snowfall linear infinite;
         }
-        /* 圣诞树容器 */
-        .christmas-tree {
-            position: relative;
-            z-index: 10;
-        }
-        /* 树的主体 */
-        .tree {
-            position: relative;
-        }
-        /* 树的每层 */
-        .tree-layer {
+        /* 3D场景容器 */
+        #scene-container {
             position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 80px solid transparent;
-            border-right: 80px solid transparent;
-            border-bottom: 100px solid #228B22;
-            transform: translateX(-50%);
-            left: 50%;
+            width: 100%;
+            height: 100%;
         }
-        .tree-layer-1 {
-            top: 0;
-        }
-        .tree-layer-2 {
-            top: 60px;
-            border-left: 100px solid transparent;
-            border-right: 100px solid transparent;
-            border-bottom: 120px solid #2E8B57;
-        }
-        .tree-layer-3 {
-            top: 140px;
-            border-left: 120px solid transparent;
-            border-right: 120px solid transparent;
-            border-bottom: 140px solid #32CD32;
-        }
-        /* 树干 */
-        .tree-trunk {
-            position: absolute;
-            width: 40px;
-            height: 80px;
-            background: #8B4513;
-            left: 50%;
-            transform: translateX(-50%);
-            top: 240px;
-            border-radius: 5px;
-        }
-        /* 装饰球 */
-        .ornament {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            z-index: 11;
-            animation: blink 2s infinite alternate;
-        }
-        /* 星星 */
-        .star {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 40px;
-            color: #FFD700;
-            animation: rotate 5s linear infinite, blink 1.5s infinite alternate;
-            z-index: 12;
-        }
-        /* 祝福语 */
+        /* 祝福语（优化光影） */
         .message {
             position: absolute;
-            bottom: 50px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             color: #fff;
             font-size: 18px;
             text-align: center;
-            text-shadow: 0 0 10px #fff, 0 0 20px #ff00de;
+            text-shadow: 0 0 15px #ff69b4, 0 0 30px #ff00de, 0 0 45px #9900cc;
             animation: fade 3s infinite alternate;
+            z-index: 10;
+            pointer-events: none;
         }
-        /* 动画效果 */
+        /* 动画效果优化 */
         @keyframes snowfall {
             0% {
                 top: -10%;
@@ -117,122 +57,238 @@
                 transform: translateX(50px) rotate(360deg);
             }
         }
-        @keyframes blink {
-            0% {
-                opacity: 0.7;
-                transform: scale(0.9);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1.1);
-            }
-        }
-        @keyframes rotate {
-            0% {
-                transform: translateX(-50%) rotate(0deg);
-            }
-            100% {
-                transform: translateX(-50%) rotate(360deg);
-            }
-        }
         @keyframes fade {
             0% {
-                opacity: 0.8;
+                opacity: 0.7;
+                text-shadow: 0 0 10px #ff69b4, 0 0 20px #ff00de;
             }
             100% {
                 opacity: 1;
+                text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff00de, 0 0 60px #9900cc;
             }
         }
         /* 手机适配 */
         @media (max-width: 768px) {
-            .tree-layer {
-                border-left: 50px solid transparent;
-                border-right: 50px solid transparent;
-                border-bottom: 70px solid #228B22;
-            }
-            .tree-layer-2 {
-                border-left: 70px solid transparent;
-                border-right: 70px solid transparent;
-                border-bottom: 90px solid #2E8B57;
-                top: 40px;
-            }
-            .tree-layer-3 {
-                border-left: 90px solid transparent;
-                border-right: 90px solid transparent;
-                border-bottom: 110px solid #32CD32;
-                top: 100px;
-            }
-            .tree-trunk {
-                width: 30px;
-                height: 60px;
-                top: 170px;
-            }
-            .star {
-                font-size: 30px;
-                top: -20px;
-            }
             .message {
                 font-size: 16px;
-                bottom: 30px;
+                bottom: 20px;
             }
-            .ornament {
-                width: 15px;
-                height: 15px;
+            .snowflake {
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="christmas-tree">
-        <!-- 星星 -->
-        <div class="star">★</div>
-        <!-- 树的三层 -->
-        <div class="tree">
-            <div class="tree-layer tree-layer-1"></div>
-            <div class="tree-layer tree-layer-2"></div>
-            <div class="tree-layer tree-layer-3"></div>
-            <!-- 树干 -->
-            <div class="tree-trunk"></div>
-            <!-- 装饰球 -->
-            <div class="ornament" style="top: 40px; left: 30%; background: #FF0000;"></div>
-            <div class="ornament" style="top: 80px; left: 70%; background: #00FF00;"></div>
-            <div class="ornament" style="top: 120px; left: 20%; background: #0000FF;"></div>
-            <div class="ornament" style="top: 160px; left: 80%; background: #FFFF00;"></div>
-            <div class="ornament" style="top: 60px; left: 50%; background: #FF69B4;"></div>
-            <div class="ornament" style="top: 100px; left: 40%; background: #8A2BE2;"></div>
-            <div class="ornament" style="top: 140px; left: 60%; background: #FF8C00;"></div>
-        </div>
-    </div>
+    <!-- 3D场景容器 -->
+    <div id="scene-container"></div>
     <!-- 祝福语 -->
     <div class="message">
         愿圣诞的星光温暖你的每一天<br>
-        🎄 圣诞快乐 🎄 荷包蛋 🎄
+        圣诞快乐 🎄
     </div>
 
+    <!-- 引入Three.js核心库 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+    <!-- 引入轨道控制器（支持鼠标/触摸旋转视角） -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+
     <script>
-        // 创建雪花
+        // ====================== 3D圣诞树核心逻辑 ======================
+        // 1. 初始化场景、相机、渲染器
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000); // 黑色背景
+        scene.fog = new THREE.Fog(0x000000, 10, 30); // 柔化远处效果
+
+        // 透视相机（适配手机屏幕）
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(0, 5, 15); // 相机初始位置
+
+        // 渲染器（抗锯齿+适配屏幕）
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true, // 抗锯齿
+            alpha: true 
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // 开启阴影
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 柔化阴影
+        document.getElementById('scene-container').appendChild(renderer.domElement);
+
+        // 2. 添加光源（营造浪漫光影）
+        // 环境光（基础照明）
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+
+        // 点光源（模拟圣诞彩灯，粉色柔光）
+        const pointLight1 = new THREE.PointLight(0xff69b4, 1.5, 20);
+        pointLight1.position.set(5, 8, 5);
+        pointLight1.castShadow = true;
+        scene.add(pointLight1);
+
+        // 点光源（绿色柔光）
+        const pointLight2 = new THREE.PointLight(0x32cd32, 1.2, 20);
+        pointLight2.position.set(-5, 8, -5);
+        pointLight2.castShadow = true;
+        scene.add(pointLight2);
+
+        // 聚光灯（照亮圣诞树主体）
+        const spotLight = new THREE.SpotLight(0xffffff, 1);
+        spotLight.position.set(0, 15, 0);
+        spotLight.target.position.set(0, 0, 0);
+        spotLight.angle = Math.PI / 4;
+        spotLight.penumbra = 0.2;
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+        scene.add(spotLight.target);
+
+        // 3. 创建3D圣诞树
+        function createChristmasTree() {
+            // 圣诞树组（方便整体旋转）
+            const treeGroup = new THREE.Group();
+
+            // 树干
+            const trunkGeometry = new THREE.CylinderGeometry(1, 1.5, 6, 16);
+            const trunkMaterial = new THREE.MeshPhongMaterial({
+                color: 0x8B4513, // 棕木色
+                shininess: 10,
+                specular: 0x442200
+            });
+            const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+            trunk.position.y = -3; // 树干位置
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            treeGroup.add(trunk);
+
+            // 圣诞树主体（三层锥形，渐变绿色）
+            const treeColors = [0x228B22, 0x2E8B57, 0x32CD32]; // 深绿→中绿→浅绿
+            const treeHeights = [6, 5, 4];
+            const treeRadii = [4, 3, 2];
+
+            for (let i = 0; i < 3; i++) {
+                const coneGeometry = new THREE.ConeGeometry(treeRadii[i], treeHeights[i], 32);
+                const coneMaterial = new THREE.MeshPhongMaterial({
+                    color: treeColors[i],
+                    shininess: 20,
+                    specular: 0x00ff00,
+                    emissive: 0x002200, // 微弱自发光
+                    emissiveIntensity: 0.2
+                });
+                const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+                cone.position.y = (treeHeights[i]/2) + (i * (treeHeights[i] - 1)); // 分层堆叠
+                cone.castShadow = true;
+                cone.receiveShadow = true;
+                treeGroup.add(cone);
+            }
+
+            // 树顶星星
+            const starGeometry = new THREE.SphereGeometry(0.8, 16, 16); // 用球体模拟星星（更立体）
+            const starMaterial = new THREE.MeshPhongMaterial({
+                color: 0xFFD700, // 金色
+                shininess: 100,
+                specular: 0xffffff,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.5
+            });
+            const star = new THREE.Mesh(starGeometry, starMaterial);
+            star.position.y = 10; // 星星位置
+            star.castShadow = true;
+            treeGroup.add(star);
+
+            // 装饰球（随机分布）
+            const ornamentColors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF69B4, 0x8A2BE2, 0xFF8C00];
+            for (let i = 0; i < 20; i++) {
+                const ornamentGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const ornamentMaterial = new THREE.MeshPhongMaterial({
+                    color: ornamentColors[Math.floor(Math.random() * ornamentColors.length)],
+                    shininess: 50,
+                    specular: 0xffffff,
+                    emissive: ornamentColors[Math.floor(Math.random() * ornamentColors.length)],
+                    emissiveIntensity: 0.3
+                });
+                const ornament = new THREE.Mesh(ornamentGeometry, ornamentMaterial);
+                // 随机分布在树上
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 3 + 0.5;
+                const height = Math.random() * 8 + 1;
+                ornament.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+                ornament.castShadow = true;
+                treeGroup.add(ornament);
+            }
+
+            // 添加到场景
+            scene.add(treeGroup);
+            return treeGroup;
+        }
+
+        // 创建圣诞树并添加轨道控制器
+        const tree = createChristmasTree();
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // 阻尼效果（旋转更顺滑）
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 8; // 最小缩放距离
+        controls.maxDistance = 30; // 最大缩放距离
+        controls.enablePan = false; // 禁用平移（简化操作）
+
+        // 4. 动画循环（自动旋转+呼吸效果）
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 圣诞树自动缓慢旋转
+            tree.rotation.y += 0.005;
+            // 树顶星星呼吸效果
+            const star = tree.children[tree.children.length - 2]; // 星星是倒数第二个子元素
+            star.scale.set(
+                1 + Math.sin(Date.now() * 0.001) * 0.1,
+                1 + Math.sin(Date.now() * 0.001) * 0.1,
+                1 + Math.sin(Date.now() * 0.001) * 0.1
+            );
+
+            // 更新控制器
+            controls.update();
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 5. 屏幕适配
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ====================== 雪花效果（保留并优化） ======================
         function createSnowflakes() {
-            const snowCount = 50; // 雪花数量
+            const snowCount = 80; // 增加雪花数量增强氛围
             const body = document.body;
 
             for (let i = 0; i < snowCount; i++) {
                 const snowflake = document.createElement('div');
                 snowflake.classList.add('snowflake');
                 // 随机雪花字符
-                const snowChars = ['❄️', '❅', '❆', '✻'];
+                const snowChars = ['❄️', '❅', '❆', '✻', '❉'];
                 snowflake.textContent = snowChars[Math.floor(Math.random() * snowChars.length)];
                 // 随机位置和动画
-                const size = Math.random() * 10 + 5;
+                const size = Math.random() * 8 + 4;
                 snowflake.style.fontSize = `${size}px`;
                 snowflake.style.left = `${Math.random() * 100}vw`;
-                snowflake.style.animationDuration = `${Math.random() * 10 + 10}s`;
-                snowflake.style.animationDelay = `${Math.random() * 5}s`;
+                snowflake.style.animationDuration = `${Math.random() * 15 + 10}s`;
+                snowflake.style.animationDelay = `${Math.random() * 8}s`;
                 body.appendChild(snowflake);
 
                 // 雪花落地后重新生成
                 snowflake.addEventListener('animationend', () => {
                     snowflake.remove();
-                    createSnowflakes(); // 重新创建一个雪花
+                    createSnowflakes();
                 });
             }
         }
