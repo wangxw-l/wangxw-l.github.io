@@ -1,19 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
- 
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
- 
-    <title>圣诞树</title>
- 
+    <!-- 视口适配：仅影响移动端，不影响电脑端 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>圣诞树立体音效</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
- 
     <style>
         * {
             box-sizing: border-box;
         }
- 
- 
         body {
             margin: 0;
             height: 100vh;
@@ -24,79 +20,77 @@
             background: #161616;
             color: #c5a880;
             font-family: sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
- 
- 
         label {
             display: inline-block;
             background-color: #161616;
             padding: 16px;
-            border-radius: 0.3rem;
+            border-radius: 10px;
             cursor: pointer;
             margin-top: 1rem;
-            width: 300px;
-            border-radius: 10px;
+            /* 电脑端固定300px，移动端自适应 */
+            width: clamp(300px, 90%, 300px);
             border: 1px solid #c5a880;
             text-align: center;
+            touch-action: manipulation;
         }
- 
- 
         ul {
             list-style-type: none;
             padding: 0;
             margin: 0;
+            width: 100%;
+            padding: 0 20px;
         }
- 
- 
         .btn {
             background-color: #161616;
             border-radius: 10px;
             color: #c5a880;
             border: 1px solid #c5a880;
             padding: 16px;
-            width: 300px;
-            margin-bottom: 16px;
+            /* 电脑端固定300px，移动端自适应 */
+            width: clamp(300px, 90%, 300px);
+            margin: 0 auto 16px auto;
             line-height: 1.5;
             cursor: pointer;
+            touch-action: manipulation;
+            font-size: 14px;
         }
- 
         .separator {
             font-weight: bold;
             text-align: center;
-            width: 300px;
-            margin: 16px 0px;
+            width: clamp(300px, 90%, 300px);
+            margin: 16px auto;
             color: #a07676;
         }
- 
- 
         .title {
             color: #a07676;
             font-weight: bold;
             font-size: 1.25rem;
             margin-bottom: 16px;
+            text-align: center;
         }
- 
- 
         .text-loading {
-            font-size: 2rem;
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 0 20px;
         }
     </style>
- 
     <script>
         window.console = window.console || function (t) { };
-    </script>
- 
- 
- 
-    <script>
-        if (document.location.search.match(/type=embed/gi)) {
-            window.parent.postMessage("resize", "*");
+        // 音频上下文解锁：仅移动端需要，电脑端不影响
+        function unlockAudioContext() {
+            if (window.AudioContext) {
+                const ctx = new AudioContext();
+                if (ctx.state === 'suspended') {
+                    ctx.resume().then(() => console.log('音频上下文已解锁'));
+                }
+            }
         }
+        document.addEventListener('touchstart', unlockAudioContext, { once: true });
+        document.addEventListener('click', unlockAudioContext, { once: true });
     </script>
- 
- 
 </head>
- 
 <body translate="no">
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/examples/js/postprocessing/EffectComposer.js"></script>
@@ -105,230 +99,239 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/examples/js/shaders/CopyShader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
- 
+
     <div id="overlay">
         <ul>
             <li class="title">请选择音乐</li>
-            <li>
-                <button class="btn" id="btnA" type="button">
-                    Snowflakes Falling Down by Simon Panrucker
-                </button>
-            </li>
-            <li><button class="btn" id="btnB" type="button">This Christmas by Dott</button></li>
-            <li><button class="btn" id="btnC" type="button">No room at the inn by TRG Banks</button></li>
-            <li><button class="btn" id="btnD" type="button">Jingle Bell Swing by Mark Smeby</button></li>
+            <li><button class="btn" id="btnA" type="button">Snowflakes Falling Down</button></li>
+            <li><button class="btn" id="btnB" type="button">This Christmas</button></li>
+            <li><button class="btn" id="btnC" type="button">No room at the inn</button></li>
+            <li><button class="btn" id="btnD" type="button">Jingle Bell Swing</button></li>
             <li class="separator">或者</li>
             <li>
-                <input type="file" id="upload" hidden />
-                <label for="upload">Upload File</label>
+                <input type="file" id="upload" hidden accept="audio/*" />
+                <label for="upload">上传本地音乐</label>
             </li>
         </ul>
     </div>
- 
+
     <script id="rendered-js">
         const { PI, sin, cos } = Math;
         const TAU = 2 * PI;
- 
+
         const map = (value, sMin, sMax, dMin, dMax) => {
             return dMin + (value - sMin) / (sMax - sMin) * (dMax - dMin);
         };
- 
-        const range = (n, m = 0) =>
-            Array(n).
-                fill(m).
-                map((i, j) => i + j);
- 
+
+        const range = (n, m = 0) => Array(n).fill(m).map((i, j) => i + j);
         const rand = (max, min = 0) => min + Math.random() * (max - min);
         const randInt = (max, min = 0) => Math.floor(min + Math.random() * (max - min));
         const randChoise = arr => arr[randInt(arr.length)];
         const polar = (ang, r = 1) => [r * cos(ang), r * sin(ang)];
- 
+
         let scene, camera, renderer, analyser;
         let step = 0;
         const uniforms = {
             time: { type: "f", value: 0.0 },
             step: { type: "f", value: 0.0 }
         };
- 
+
         const params = {
             exposure: 1,
             bloomStrength: 0.9,
             bloomThreshold: 0,
             bloomRadius: 0.5
         };
- 
+
         let composer;
- 
         const fftSize = 2048;
-        const totalPoints = 4000;
- 
+
+        // 【关键修复1】精准判断移动端：避免电脑被误判
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+            && !/Windows Phone|iPad/.test(navigator.userAgent) // 排除平板/Windows手机
+            && window.innerWidth < 768; // 仅屏幕宽度<768px才判定为移动端
+
+        // 【关键修复2】恢复电脑端参数，移动端仅适度降级
+        const totalPoints = isMobile ? 2000 : 4000; // 电脑端恢复4000点
+        const planePoints = isMobile ? 2000 : 3000; // 电脑端恢复3000点
+        const snowPoints = isMobile ? 200 : 300;    // 电脑端恢复300点
+        const treeCount = isMobile ? 8 : 10;        // 电脑端恢复10棵树
+        const bloomStrength = isMobile ? 0.7 : 0.9; // 电脑端恢复0.9发光强度
+
         const listener = new THREE.AudioListener();
- 
         const audio = new THREE.Audio(listener);
- 
+
         document.querySelector("input").addEventListener("change", uploadAudio, false);
- 
         const buttons = document.querySelectorAll(".btn");
-        buttons.forEach((button, index) =>
-            button.addEventListener("click", () => loadAudio(index)));
- 
- 
+        buttons.forEach((button, index) => button.addEventListener("click", () => loadAudio(index)));
+
+        function loadAudio(i) {
+            document.getElementById("overlay").innerHTML = '<div class="text-loading">正在加载音乐，请稍等...</div>';
+            
+            // 音频上下文解锁：仅移动端需要，电脑端跳过
+            if (isMobile && listener.context.state === 'suspended') {
+                listener.context.resume().then(() => loadAudioFile(i));
+            } else {
+                loadAudioFile(i);
+            }
+        }
+
+        function loadAudioFile(i) {
+            const files = [
+                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Simon_Panrucker/Happy_Christmas_You_Guys/Simon_Panrucker_-_01_-_Snowflakes_Falling_Down.mp3",
+                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Dott/This_Christmas/Dott_-_01_-_This_Christmas.mp3",
+                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/TRG_Banks/TRG_Banks_Christmas_Album/TRG_Banks_-_12_-_No_room_at_the_inn.mp3",
+                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Mark_Smeby/En_attendant_Nol/Mark_Smeby_-_07_-_Jingle_Bell_Swing.mp3"
+            ];
+
+            const loader = new THREE.AudioLoader();
+            loader.load(files[i], 
+                function (buffer) {
+                    audio.setBuffer(buffer);
+                    audio.setVolume(isMobile ? 0.6 : 0.8); // 电脑端音量恢复0.8
+                    audio.play();
+                    analyser = new THREE.AudioAnalyser(audio, fftSize);
+                    init();
+                },
+                function (xhr) {
+                    const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                    document.querySelector('.text-loading').textContent = `加载中... ${percent}%`;
+                },
+                function (err) {
+                    document.getElementById("overlay").innerHTML = '<div class="text-loading">音乐加载失败，请刷新重试</div>';
+                    setTimeout(() => location.reload(), 2000);
+                }
+            );
+        }
+
+        function uploadAudio(event) {
+            document.getElementById("overlay").innerHTML = '<div class="text-loading">请稍等...</div>';
+            
+            if (isMobile && listener.context.state === 'suspended') {
+                listener.context.resume().then(() => processUploadedFile(event));
+            } else {
+                processUploadedFile(event);
+            }
+        }
+
+        function processUploadedFile(event) {
+            const files = event.target.files;
+            const reader = new FileReader();
+            reader.onload = function (file) {
+                listener.context.decodeAudioData(file.target.result, 
+                    function (audioBuffer) {
+                        audio.setBuffer(audioBuffer);
+                        audio.setVolume(isMobile ? 0.6 : 0.8);
+                        audio.play();
+                        analyser = new THREE.AudioAnalyser(audio, fftSize);
+                        init();
+                    }, 
+                    function (err) {
+                        document.getElementById("overlay").innerHTML = '<div class="text-loading">音频解析失败，请换一个文件</div>';
+                    }
+                );
+            };
+            reader.readAsArrayBuffer(files[0]);
+        }
+
         function init() {
-            const overlay = document.getElementById("overlay");
-            overlay.remove();
- 
+            document.getElementById("overlay").remove();
+
+            // 【关键修复3】电脑端保留抗锯齿，移动端关闭
             scene = new THREE.Scene();
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: !isMobile });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
- 
-            camera = new THREE.PerspectiveCamera(
-                60,
-                window.innerWidth / window.innerHeight,
-                1,
-                1000);
- 
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
             camera.position.set(-0.09397456774197047, -2.5597086635726947, 24.420789670889008);
             camera.rotation.set(0.10443543723052419, -0.003827152981119352, 0.0004011488708739715);
- 
-            const format = renderer.capabilities.isWebGL2 ?
-                THREE.RedFormat :
-                THREE.LuminanceFormat;
- 
-            uniforms.tAudioData = {
-                value: new THREE.DataTexture(analyser.data, fftSize / 2, 1, format)
-            };
- 
- 
-            addPlane(scene, uniforms, 3000);
+
+            const format = renderer.capabilities.isWebGL2 ? THREE.RedFormat : THREE.LuminanceFormat;
+            uniforms.tAudioData = { value: new THREE.DataTexture(analyser.data, fftSize / 2, 1, format) };
+
+            // 恢复电脑端原始点数
+            addPlane(scene, uniforms, planePoints);
             addSnow(scene, uniforms);
- 
-            range(10).map(i => {
+            range(treeCount).map(i => {
                 addTree(scene, uniforms, totalPoints, [20, 0, -20 * i]);
                 addTree(scene, uniforms, totalPoints, [-20, 0, -20 * i]);
             });
- 
+
+            // 【关键修复4】电脑端恢复原始发光参数
             const renderScene = new THREE.RenderPass(scene, camera);
- 
             const bloomPass = new THREE.UnrealBloomPass(
                 new THREE.Vector2(window.innerWidth, window.innerHeight),
                 1.5,
                 0.4,
-                0.85);
- 
+                bloomStrength
+            );
             bloomPass.threshold = params.bloomThreshold;
-            bloomPass.strength = params.bloomStrength;
+            bloomPass.strength = bloomStrength;
             bloomPass.radius = params.bloomRadius;
- 
+
             composer = new THREE.EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
- 
-            addListners(camera, renderer, composer);
+
+            addListeners(camera, renderer, composer);
             animate();
         }
- 
+
         function animate(time) {
+            requestAnimationFrame(animate);
+            
             analyser.getFrequencyData();
             uniforms.tAudioData.value.needsUpdate = true;
             step = (step + 1) % 1000;
             uniforms.time.value = time;
             uniforms.step.value = step;
             composer.render();
-            requestAnimationFrame(animate);
         }
- 
-        function loadAudio(i) {
-            document.getElementById("overlay").innerHTML =
-                '<div class="text-loading">正在下载音乐，请稍等...</div>';
-            const files = [
-                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Simon_Panrucker/Happy_Christmas_You_Guys/Simon_Panrucker_-_01_-_Snowflakes_Falling_Down.mp3",
-                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Dott/This_Christmas/Dott_-_01_-_This_Christmas.mp3",
-                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/TRG_Banks/TRG_Banks_Christmas_Album/TRG_Banks_-_12_-_No_room_at_the_inn.mp3",
-                "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Mark_Smeby/En_attendant_Nol/Mark_Smeby_-_07_-_Jingle_Bell_Swing.mp3"];
- 
-            const file = files[i];
- 
-            const loader = new THREE.AudioLoader();
-            loader.load(file, function (buffer) {
-                audio.setBuffer(buffer);
-                audio.play();
-                analyser = new THREE.AudioAnalyser(audio, fftSize);
-                init();
-            });
- 
- 
- 
- 
-        }
- 
- 
-        function uploadAudio(event) {
-            document.getElementById("overlay").innerHTML =
-                '<div class="text-loading">请稍等...</div>';
-            const files = event.target.files;
-            const reader = new FileReader();
- 
-            reader.onload = function (file) {
-                var arrayBuffer = file.target.result;
- 
-                listener.context.decodeAudioData(arrayBuffer, function (audioBuffer) {
-                    audio.setBuffer(audioBuffer);
-                    audio.play();
-                    analyser = new THREE.AudioAnalyser(audio, fftSize);
-                    init();
-                });
-            };
- 
-            reader.readAsArrayBuffer(files[0]);
-        }
- 
+
         function addTree(scene, uniforms, totalPoints, treePosition) {
             const vertexShader = `
-      attribute float mIndex;
-      varying vec3 vColor;
-      varying float opacity;
-      uniform sampler2D tAudioData;
-      float norm(float value, float min, float max ){
-       return (value - min) / (max - min);
-      }
-      float lerp(float norm, float min, float max){
-       return (max - min) * norm + min;
-      }
-      float map(float value, float sourceMin, float sourceMax, float destMin, float destMax){
-       return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
-      }
-      void main() {
-       vColor = color;
-       vec3 p = position;
-       vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
-       float amplitude = texture2D( tAudioData, vec2( mIndex, 0.1 ) ).r;
-       float amplitudeClamped = clamp(amplitude-0.4,0.0, 0.6 );
-       float sizeMapped = map(amplitudeClamped, 0.0, 0.6, 1.0, 20.0);
-       opacity = map(mvPosition.z , -200.0, 15.0, 0.0, 1.0);
-       gl_PointSize = sizeMapped * ( 100.0 / -mvPosition.z );
-       gl_Position = projectionMatrix * mvPosition;
-      }
-      `;
+                attribute float mIndex;
+                varying vec3 vColor;
+                varying float opacity;
+                uniform sampler2D tAudioData;
+                float norm(float value, float min, float max ){
+                    return (value - min) / (max - min);
+                }
+                float lerp(float norm, float min, float max){
+                    return (max - min) * norm + min;
+                }
+                float map(float value, float sourceMin, float sourceMax, float destMin, float destMax){
+                    return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
+                }
+                void main() {
+                    vColor = color;
+                    vec3 p = position;
+                    vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
+                    float amplitude = texture2D( tAudioData, vec2( mIndex, 0.1 ) ).r;
+                    float amplitudeClamped = clamp(amplitude-0.4,0.0, 0.6 );
+                    float sizeMapped = map(amplitudeClamped, 0.0, 0.6, 1.0, 20.0);
+                    opacity = map(mvPosition.z , -200.0, 15.0, 0.0, 1.0);
+                    gl_PointSize = sizeMapped * ( 100.0 / -mvPosition.z );
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
             const fragmentShader = `
-      varying vec3 vColor;
-      varying float opacity;
-      uniform sampler2D pointTexture;
-      void main() {
-       gl_FragColor = vec4( vColor, opacity );
-       gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord ); 
-      }
-      `;
+                varying vec3 vColor;
+                varying float opacity;
+                uniform sampler2D pointTexture;
+                void main() {
+                    gl_FragColor = vec4( vColor, opacity );
+                    gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord ); 
+                }
+            `;
             const shaderMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     ...uniforms,
-                    pointTexture: {
-                        value: new THREE.TextureLoader().load(`https://assets.codepen.io/3685267/spark1.png`)
-                    }
+                    // 【关键修复5】恢复原版纹理路径（电脑端加载更稳定）
+                    pointTexture: { value: new THREE.TextureLoader().load(`https://assets.codepen.io/3685267/spark1.png`) }
                 },
- 
- 
                 vertexShader,
                 fragmentShader,
                 blending: THREE.AdditiveBlending,
@@ -336,111 +339,94 @@
                 transparent: true,
                 vertexColors: true
             });
- 
- 
+
             const geometry = new THREE.BufferGeometry();
             const positions = [];
             const colors = [];
             const sizes = [];
             const phases = [];
             const mIndexs = [];
- 
             const color = new THREE.Color();
- 
+
             for (let i = 0; i < totalPoints; i++) {
                 const t = Math.random();
                 const y = map(t, 0, 1, -8, 10);
                 const ang = map(t, 0, 1, 0, 6 * TAU) + TAU / 2 * (i % 2);
                 const [z, x] = polar(ang, map(t, 0, 1, 5, 0));
- 
                 const modifier = map(t, 0, 1, 1, 0);
+                
                 positions.push(x + rand(-0.3 * modifier, 0.3 * modifier));
                 positions.push(y + rand(-0.3 * modifier, 0.3 * modifier));
                 positions.push(z + rand(-0.3 * modifier, 0.3 * modifier));
- 
+                
                 color.setHSL(map(i, 0, totalPoints, 1.0, 0.0), 1.0, 0.5);
- 
                 colors.push(color.r, color.g, color.b);
                 phases.push(rand(1000));
                 sizes.push(1);
                 const mIndex = map(i, 0, totalPoints, 1.0, 0.0);
                 mIndexs.push(mIndex);
             }
- 
-            geometry.setAttribute(
-                "position",
-                new THREE.Float32BufferAttribute(positions, 3).setUsage(
-                    THREE.DynamicDrawUsage));
- 
- 
+
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
             geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
             geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
             geometry.setAttribute("phase", new THREE.Float32BufferAttribute(phases, 1));
             geometry.setAttribute("mIndex", new THREE.Float32BufferAttribute(mIndexs, 1));
- 
+
             const tree = new THREE.Points(geometry, shaderMaterial);
- 
             const [px, py, pz] = treePosition;
- 
-            tree.position.x = px;
-            tree.position.y = py;
-            tree.position.z = pz;
- 
+            tree.position.set(px, py, pz);
             scene.add(tree);
         }
- 
+
         function addSnow(scene, uniforms) {
             const vertexShader = `
-      attribute float size;
-      attribute float phase;
-      attribute float phaseSecondary;
-      varying vec3 vColor;
-      varying float opacity;
-      uniform float time;
-      uniform float step;
-      float norm(float value, float min, float max ){
-       return (value - min) / (max - min);
-      }
-      float lerp(float norm, float min, float max){
-       return (max - min) * norm + min;
-      }
-      float map(float value, float sourceMin, float sourceMax, float destMin, float destMax){
-       return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
-      }
-      void main() {
-       float t = time* 0.0006;
-       vColor = color;
-       vec3 p = position;
-       p.y = map(mod(phase+step, 1000.0), 0.0, 1000.0, 25.0, -8.0);
-       p.x += sin(t+phase);
-       p.z += sin(t+phaseSecondary);
-       opacity = map(p.z, -150.0, 15.0, 0.0, 1.0);
-       vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
-       gl_PointSize = size * ( 100.0 / -mvPosition.z );
-       gl_Position = projectionMatrix * mvPosition;
-      }
-      `;
- 
+                attribute float size;
+                attribute float phase;
+                attribute float phaseSecondary;
+                varying vec3 vColor;
+                varying float opacity;
+                uniform float time;
+                uniform float step;
+                float norm(float value, float min, float max ){
+                    return (value - min) / (max - min);
+                }
+                float lerp(float norm, float min, float max){
+                    return (max - min) * norm + min;
+                }
+                float map(float value, float sourceMin, float sourceMax, float destMin, float destMax){
+                    return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
+                }
+                void main() {
+                    float t = time* 0.0006;
+                    vColor = color;
+                    vec3 p = position;
+                    p.y = map(mod(phase+step, 1000.0), 0.0, 1000.0, 25.0, -8.0);
+                    p.x += sin(t+phase);
+                    p.z += sin(t+phaseSecondary);
+                    opacity = map(p.z, -150.0, 15.0, 0.0, 1.0);
+                    vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
+                    gl_PointSize = size * ( 100.0 / -mvPosition.z );
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
             const fragmentShader = `
-      uniform sampler2D pointTexture;
-      varying vec3 vColor;
-      varying float opacity;
-      void main() {
-       gl_FragColor = vec4( vColor, opacity );
-       gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord ); 
-      }
-      `;
+                uniform sampler2D pointTexture;
+                varying vec3 vColor;
+                varying float opacity;
+                void main() {
+                    gl_FragColor = vec4( vColor, opacity );
+                    gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord ); 
+                }
+            `;
+
             function createSnowSet(sprite) {
-                const totalPoints = 300;
                 const shaderMaterial = new THREE.ShaderMaterial({
                     uniforms: {
                         ...uniforms,
-                        pointTexture: {
-                            value: new THREE.TextureLoader().load(sprite)
-                        }
+                        // 【关键修复6】恢复原版雪花纹理路径
+                        pointTexture: { value: new THREE.TextureLoader().load(sprite) }
                     },
- 
- 
                     vertexShader,
                     fragmentShader,
                     blending: THREE.AdditiveBlending,
@@ -448,89 +434,74 @@
                     transparent: true,
                     vertexColors: true
                 });
- 
- 
+
                 const geometry = new THREE.BufferGeometry();
                 const positions = [];
                 const colors = [];
                 const sizes = [];
                 const phases = [];
                 const phaseSecondaries = [];
- 
                 const color = new THREE.Color();
- 
-                for (let i = 0; i < totalPoints; i++) {
+
+                for (let i = 0; i < snowPoints; i++) {
                     const [x, y, z] = [rand(25, -25), 0, rand(15, -150)];
                     positions.push(x);
                     positions.push(y);
                     positions.push(z);
- 
                     color.set(randChoise(["#f1d4d4", "#f1f6f9", "#eeeeee", "#f1f1e8"]));
- 
                     colors.push(color.r, color.g, color.b);
                     phases.push(rand(1000));
                     phaseSecondaries.push(rand(1000));
                     sizes.push(rand(4, 2));
                 }
- 
-                geometry.setAttribute(
-                    "position",
-                    new THREE.Float32BufferAttribute(positions, 3));
- 
+
+                geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
                 geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
                 geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
                 geometry.setAttribute("phase", new THREE.Float32BufferAttribute(phases, 1));
-                geometry.setAttribute(
-                    "phaseSecondary",
-                    new THREE.Float32BufferAttribute(phaseSecondaries, 1));
- 
- 
+                geometry.setAttribute("phaseSecondary", new THREE.Float32BufferAttribute(phaseSecondaries, 1));
                 const mesh = new THREE.Points(geometry, shaderMaterial);
- 
                 scene.add(mesh);
             }
+
+            // 恢复原版雪花纹理路径
             const sprites = [
                 "https://assets.codepen.io/3685267/snowflake1.png",
                 "https://assets.codepen.io/3685267/snowflake2.png",
                 "https://assets.codepen.io/3685267/snowflake3.png",
                 "https://assets.codepen.io/3685267/snowflake4.png",
-                "https://assets.codepen.io/3685267/snowflake5.png"];
- 
-            sprites.forEach(sprite => {
-                createSnowSet(sprite);
-            });
+                "https://assets.codepen.io/3685267/snowflake5.png"
+            ];
+            sprites.forEach(sprite => createSnowSet(sprite));
         }
- 
+
         function addPlane(scene, uniforms, totalPoints) {
             const vertexShader = `
-      attribute float size;
-      attribute vec3 customColor;
-      varying vec3 vColor;
-      void main() {
-       vColor = customColor;
-       vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-       gl_PointSize = size * ( 300.0 / -mvPosition.z );
-       gl_Position = projectionMatrix * mvPosition;
-      }
-      `;
+                attribute float size;
+                attribute vec3 customColor;
+                varying vec3 vColor;
+                void main() {
+                    vColor = customColor;
+                    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                    gl_PointSize = size * ( 300.0 / -mvPosition.z );
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
             const fragmentShader = `
-      uniform vec3 color;
-      uniform sampler2D pointTexture;
-      varying vec3 vColor;
-      void main() {
-       gl_FragColor = vec4( vColor, 1.0 );
-       gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
-      }
-      `;
+                uniform vec3 color;
+                uniform sampler2D pointTexture;
+                varying vec3 vColor;
+                void main() {
+                    gl_FragColor = vec4( vColor, 1.0 );
+                    gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+                }
+            `;
             const shaderMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     ...uniforms,
-                    pointTexture: {
-                        value: new THREE.TextureLoader().load(`https://assets.codepen.io/3685267/spark1.png`)
-                    }
+                    // 恢复原版纹理路径
+                    pointTexture: { value: new THREE.TextureLoader().load(`https://assets.codepen.io/3685267/spark1.png`) }
                 },
- 
- 
                 vertexShader,
                 fragmentShader,
                 blending: THREE.AdditiveBlending,
@@ -538,70 +509,75 @@
                 transparent: true,
                 vertexColors: true
             });
- 
- 
+
             const geometry = new THREE.BufferGeometry();
             const positions = [];
             const colors = [];
             const sizes = [];
- 
             const color = new THREE.Color();
- 
+
             for (let i = 0; i < totalPoints; i++) {
                 const [x, y, z] = [rand(-25, 25), 0, rand(-150, 15)];
                 positions.push(x);
                 positions.push(y);
                 positions.push(z);
- 
                 color.set(randChoise(["#93abd3", "#f2f4c0", "#9ddfd3"]));
- 
                 colors.push(color.r, color.g, color.b);
                 sizes.push(1);
             }
- 
-            geometry.setAttribute(
-                "position",
-                new THREE.Float32BufferAttribute(positions, 3).setUsage(
-                    THREE.DynamicDrawUsage));
- 
- 
-            geometry.setAttribute(
-                "customColor",
-                new THREE.Float32BufferAttribute(colors, 3));
- 
+
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
+            geometry.setAttribute("customColor", new THREE.Float32BufferAttribute(colors, 3));
             geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
- 
+
             const plane = new THREE.Points(geometry, shaderMaterial);
- 
             plane.position.y = -8;
             scene.add(plane);
         }
- 
-        function addListners(camera, renderer, composer) {
-            document.addEventListener("keydown", e => {
-                const { x, y, z } = camera.position;
-                console.log(`camera.position.set(${x},${y},${z})`);
-                const { x: a, y: b, z: c } = camera.rotation;
-                console.log(`camera.rotation.set(${a},${b},${c})`);
-            });
- 
-            window.addEventListener(
-                "resize",
-                () => {
-                    const width = window.innerWidth;
-                    const height = window.innerHeight;
- 
-                    camera.aspect = width / height;
-                    camera.updateProjectionMatrix();
- 
-                    renderer.setSize(width, height);
-                    composer.setSize(width, height);
-                },
-                false);
- 
+
+        // 【关键修复7】恢复电脑端键盘事件，移动端添加触摸控制
+        function addListeners(camera, renderer, composer) {
+            // 电脑端保留键盘事件
+            if (!isMobile) {
+                document.addEventListener("keydown", e => {
+                    const { x, y, z } = camera.position;
+                    console.log(`camera.position.set(${x},${y},${z})`);
+                    const { x: a, y: b, z: c } = camera.rotation;
+                    console.log(`camera.rotation.set(${a},${b},${c})`);
+                });
+            }
+
+            window.addEventListener("resize", () => {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+                composer.setSize(width, height);
+            }, false);
+
+            // 移动端触摸控制：不影响电脑端
+            if (isMobile) {
+                let isTouching = false;
+                let lastTouch = { x: 0, y: 0 };
+                document.addEventListener('touchstart', (e) => {
+                    isTouching = true;
+                    lastTouch.x = e.touches[0].clientX;
+                    lastTouch.y = e.touches[0].clientY;
+                });
+                document.addEventListener('touchmove', (e) => {
+                    if (!isTouching) return;
+                    const deltaX = e.touches[0].clientX - lastTouch.x;
+                    const deltaY = e.touches[0].clientY - lastTouch.y;
+                    camera.rotation.y += deltaX * 0.005;
+                    camera.rotation.x += deltaY * 0.005;
+                    camera.rotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, camera.rotation.x));
+                    lastTouch.x = e.touches[0].clientX;
+                    lastTouch.y = e.touches[0].clientY;
+                });
+                document.addEventListener('touchend', () => isTouching = false);
+            }
         }
     </script>
- 
 </body>
- 
 </html>
