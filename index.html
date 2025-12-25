@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 视口适配：仅影响移动端，不影响电脑端 -->
+    <!-- 视口适配：强制横屏逻辑的基础 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>圣诞树立体音效</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
@@ -21,6 +21,58 @@
             color: #c5a880;
             font-family: sans-serif;
             -webkit-tap-highlight-color: transparent;
+            /* 核心：移动端强制横屏（旋转90度），电脑端无影响 */
+            @media (max-width: 768px) {
+                transform: rotate(90deg);
+                transform-origin: center center;
+                width: 100vh; /* 旋转后宽度=原高度 */
+                height: 100vw; /* 旋转后高度=原宽度 */
+                position: fixed;
+                top: 0;
+                left: 0;
+            }
+        }
+
+        /* 横屏提示（仅移动端显示） */
+        .landscape-hint {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #161616;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+            color: #a07676;
+            font-size: 1.2rem;
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            .landscape-hint {
+                display: flex;
+            }
+        }
+
+        /* 音频选择容器：确保绝对居中 */
+        #overlay {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            max-width: 300px; /* 固定最大宽度 */
+            /* 确保移动端居中 */
+            margin: 0 auto;
         }
         label {
             display: inline-block;
@@ -29,18 +81,10 @@
             border-radius: 10px;
             cursor: pointer;
             margin-top: 1rem;
-            /* 电脑端固定300px，移动端自适应 */
-            width: clamp(300px, 90%, 300px);
+            width: 100%; /* 容器宽度100%，继承ul的max-width */
             border: 1px solid #c5a880;
             text-align: center;
             touch-action: manipulation;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            width: 100%;
-            padding: 0 20px;
         }
         .btn {
             background-color: #161616;
@@ -48,8 +92,7 @@
             color: #c5a880;
             border: 1px solid #c5a880;
             padding: 16px;
-            /* 电脑端固定300px，移动端自适应 */
-            width: clamp(300px, 90%, 300px);
+            width: 100%; /* 容器宽度100% */
             margin: 0 auto 16px auto;
             line-height: 1.5;
             cursor: pointer;
@@ -59,8 +102,8 @@
         .separator {
             font-weight: bold;
             text-align: center;
-            width: clamp(300px, 90%, 300px);
-            margin: 16px auto;
+            width: 100%;
+            margin: 16px 0;
             color: #a07676;
         }
         .title {
@@ -74,11 +117,12 @@
             font-size: 1.5rem;
             text-align: center;
             padding: 0 20px;
+            color: #a07676;
         }
     </style>
     <script>
         window.console = window.console || function (t) { };
-        // 音频上下文解锁：仅移动端需要，电脑端不影响
+        // 音频上下文解锁：仅移动端需要
         function unlockAudioContext() {
             if (window.AudioContext) {
                 const ctx = new AudioContext();
@@ -92,6 +136,12 @@
     </script>
 </head>
 <body translate="no">
+    <!-- 移动端横屏提示 -->
+    <div class="landscape-hint">
+        <h2>请切换为横屏浏览</h2>
+        <p>体验更佳的圣诞树立体音效效果</p>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.115.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -146,17 +196,17 @@
         let composer;
         const fftSize = 2048;
 
-        // 【关键修复1】精准判断移动端：避免电脑被误判
+        // 精准判断移动端
         const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-            && !/Windows Phone|iPad/.test(navigator.userAgent) // 排除平板/Windows手机
-            && window.innerWidth < 768; // 仅屏幕宽度<768px才判定为移动端
+            && !/Windows Phone|iPad/.test(navigator.userAgent) 
+            && window.innerWidth < 768;
 
-        // 【关键修复2】恢复电脑端参数，移动端仅适度降级
-        const totalPoints = isMobile ? 2000 : 4000; // 电脑端恢复4000点
-        const planePoints = isMobile ? 2000 : 3000; // 电脑端恢复3000点
-        const snowPoints = isMobile ? 200 : 300;    // 电脑端恢复300点
-        const treeCount = isMobile ? 8 : 10;        // 电脑端恢复10棵树
-        const bloomStrength = isMobile ? 0.7 : 0.9; // 电脑端恢复0.9发光强度
+        // 分端参数
+        const totalPoints = isMobile ? 2000 : 4000;
+        const planePoints = isMobile ? 2000 : 3000;
+        const snowPoints = isMobile ? 200 : 300;
+        const treeCount = isMobile ? 8 : 10;
+        const bloomStrength = isMobile ? 0.7 : 0.9;
 
         const listener = new THREE.AudioListener();
         const audio = new THREE.Audio(listener);
@@ -168,7 +218,6 @@
         function loadAudio(i) {
             document.getElementById("overlay").innerHTML = '<div class="text-loading">正在加载音乐，请稍等...</div>';
             
-            // 音频上下文解锁：仅移动端需要，电脑端跳过
             if (isMobile && listener.context.state === 'suspended') {
                 listener.context.resume().then(() => loadAudioFile(i));
             } else {
@@ -188,7 +237,7 @@
             loader.load(files[i], 
                 function (buffer) {
                     audio.setBuffer(buffer);
-                    audio.setVolume(isMobile ? 0.6 : 0.8); // 电脑端音量恢复0.8
+                    audio.setVolume(isMobile ? 0.6 : 0.8);
                     audio.play();
                     analyser = new THREE.AudioAnalyser(audio, fftSize);
                     init();
@@ -236,8 +285,9 @@
 
         function init() {
             document.getElementById("overlay").remove();
+            // 隐藏横屏提示
+            document.querySelector('.landscape-hint').style.display = 'none';
 
-            // 【关键修复3】电脑端保留抗锯齿，移动端关闭
             scene = new THREE.Scene();
             renderer = new THREE.WebGLRenderer({ antialias: !isMobile });
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -251,7 +301,6 @@
             const format = renderer.capabilities.isWebGL2 ? THREE.RedFormat : THREE.LuminanceFormat;
             uniforms.tAudioData = { value: new THREE.DataTexture(analyser.data, fftSize / 2, 1, format) };
 
-            // 恢复电脑端原始点数
             addPlane(scene, uniforms, planePoints);
             addSnow(scene, uniforms);
             range(treeCount).map(i => {
@@ -259,7 +308,6 @@
                 addTree(scene, uniforms, totalPoints, [-20, 0, -20 * i]);
             });
 
-            // 【关键修复4】电脑端恢复原始发光参数
             const renderScene = new THREE.RenderPass(scene, camera);
             const bloomPass = new THREE.UnrealBloomPass(
                 new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -329,7 +377,6 @@
             const shaderMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     ...uniforms,
-                    // 【关键修复5】恢复原版纹理路径（电脑端加载更稳定）
                     pointTexture: { value: new THREE.TextureLoader().load(`https://assets.codepen.io/3685267/spark1.png`) }
                 },
                 vertexShader,
@@ -424,7 +471,6 @@
                 const shaderMaterial = new THREE.ShaderMaterial({
                     uniforms: {
                         ...uniforms,
-                        // 【关键修复6】恢复原版雪花纹理路径
                         pointTexture: { value: new THREE.TextureLoader().load(sprite) }
                     },
                     vertexShader,
@@ -464,7 +510,6 @@
                 scene.add(mesh);
             }
 
-            // 恢复原版雪花纹理路径
             const sprites = [
                 "https://assets.codepen.io/3685267/snowflake1.png",
                 "https://assets.codepen.io/3685267/snowflake2.png",
@@ -499,7 +544,6 @@
             const shaderMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     ...uniforms,
-                    // 恢复原版纹理路径
                     pointTexture: { value: new THREE.TextureLoader().load(`https://assets.codepen.io/3685267/spark1.png`) }
                 },
                 vertexShader,
@@ -535,7 +579,6 @@
             scene.add(plane);
         }
 
-        // 【关键修复7】恢复电脑端键盘事件，移动端添加触摸控制
         function addListeners(camera, renderer, composer) {
             // 电脑端保留键盘事件
             if (!isMobile) {
@@ -556,7 +599,7 @@
                 composer.setSize(width, height);
             }, false);
 
-            // 移动端触摸控制：不影响电脑端
+            // 移动端触摸控制
             if (isMobile) {
                 let isTouching = false;
                 let lastTouch = { x: 0, y: 0 };
