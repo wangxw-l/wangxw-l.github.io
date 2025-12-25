@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浪漫圣诞树</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        /* 雪花样式 */
+        .snowflake {
+            position: absolute;
+            color: #fff;
+            font-size: 16px;
+            opacity: 0.8;
+            user-select: none;
+            animation: snowfall linear infinite;
+        }
+        /* 圣诞树容器 */
+        .christmas-tree {
+            position: relative;
+            z-index: 10;
+        }
+        /* 树的主体 */
+        .tree {
+            position: relative;
+        }
+        /* 树的每层 */
+        .tree-layer {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 80px solid transparent;
+            border-right: 80px solid transparent;
+            border-bottom: 100px solid #228B22;
+            transform: translateX(-50%);
+            left: 50%;
+        }
+        .tree-layer-1 {
+            top: 0;
+        }
+        .tree-layer-2 {
+            top: 60px;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 120px solid #2E8B57;
+        }
+        .tree-layer-3 {
+            top: 140px;
+            border-left: 120px solid transparent;
+            border-right: 120px solid transparent;
+            border-bottom: 140px solid #32CD32;
+        }
+        /* 树干 */
+        .tree-trunk {
+            position: absolute;
+            width: 40px;
+            height: 80px;
+            background: #8B4513;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 240px;
+            border-radius: 5px;
+        }
+        /* 装饰球 */
+        .ornament {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            z-index: 11;
+            animation: blink 2s infinite alternate;
+        }
+        /* 星星 */
+        .star {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            color: #FFD700;
+            animation: rotate 5s linear infinite, blink 1.5s infinite alternate;
+            z-index: 12;
+        }
+        /* 祝福语 */
+        .message {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+            text-shadow: 0 0 10px #fff, 0 0 20px #ff00de;
+            animation: fade 3s infinite alternate;
+        }
+        /* 动画效果 */
+        @keyframes snowfall {
+            0% {
+                top: -10%;
+                transform: translateX(0) rotate(0deg);
+            }
+            100% {
+                top: 100%;
+                transform: translateX(50px) rotate(360deg);
+            }
+        }
+        @keyframes blink {
+            0% {
+                opacity: 0.7;
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+        @keyframes rotate {
+            0% {
+                transform: translateX(-50%) rotate(0deg);
+            }
+            100% {
+                transform: translateX(-50%) rotate(360deg);
+            }
+        }
+        @keyframes fade {
+            0% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        /* 手机适配 */
+        @media (max-width: 768px) {
+            .tree-layer {
+                border-left: 50px solid transparent;
+                border-right: 50px solid transparent;
+                border-bottom: 70px solid #228B22;
+            }
+            .tree-layer-2 {
+                border-left: 70px solid transparent;
+                border-right: 70px solid transparent;
+                border-bottom: 90px solid #2E8B57;
+                top: 40px;
+            }
+            .tree-layer-3 {
+                border-left: 90px solid transparent;
+                border-right: 90px solid transparent;
+                border-bottom: 110px solid #32CD32;
+                top: 100px;
+            }
+            .tree-trunk {
+                width: 30px;
+                height: 60px;
+                top: 170px;
+            }
+            .star {
+                font-size: 30px;
+                top: -20px;
+            }
+            .message {
+                font-size: 16px;
+                bottom: 30px;
+            }
+            .ornament {
+                width: 15px;
+                height: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="christmas-tree">
+        <!-- 星星 -->
+        <div class="star">★</div>
+        <!-- 树的三层 -->
+        <div class="tree">
+            <div class="tree-layer tree-layer-1"></div>
+            <div class="tree-layer tree-layer-2"></div>
+            <div class="tree-layer tree-layer-3"></div>
+            <!-- 树干 -->
+            <div class="tree-trunk"></div>
+            <!-- 装饰球 -->
+            <div class="ornament" style="top: 40px; left: 30%; background: #FF0000;"></div>
+            <div class="ornament" style="top: 80px; left: 70%; background: #00FF00;"></div>
+            <div class="ornament" style="top: 120px; left: 20%; background: #0000FF;"></div>
+            <div class="ornament" style="top: 160px; left: 80%; background: #FFFF00;"></div>
+            <div class="ornament" style="top: 60px; left: 50%; background: #FF69B4;"></div>
+            <div class="ornament" style="top: 100px; left: 40%; background: #8A2BE2;"></div>
+            <div class="ornament" style="top: 140px; left: 60%; background: #FF8C00;"></div>
+        </div>
+    </div>
+    <!-- 祝福语 -->
+    <div class="message">
+        愿圣诞的星光温暖你的每一天<br>
+        圣诞快乐 🎄
+    </div>
+
+    <script>
+        // 创建雪花
+        function createSnowflakes() {
+            const snowCount = 50; // 雪花数量
+            const body = document.body;
+
+            for (let i = 0; i < snowCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                // 随机雪花字符
+                const snowChars = ['❄️', '❅', '❆', '✻'];
+                snowflake.textContent = snowChars[Math.floor(Math.random() * snowChars.length)];
+                // 随机位置和动画
+                const size = Math.random() * 10 + 5;
+                snowflake.style.fontSize = `${size}px`;
+                snowflake.style.left = `${Math.random() * 100}vw`;
+                snowflake.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                snowflake.style.animationDelay = `${Math.random() * 5}s`;
+                body.appendChild(snowflake);
+
+                // 雪花落地后重新生成
+                snowflake.addEventListener('animationend', () => {
+                    snowflake.remove();
+                    createSnowflakes(); // 重新创建一个雪花
+                });
+            }
+        }
+
+        // 页面加载时创建雪花
+        window.onload = function() {
+            createSnowflakes();
+        };
+    </script>
+</body>
+</html>
